@@ -233,8 +233,12 @@ module Alchemy
       end
       elements.sort_by do |element|
         content_names.collect do |content_name|
-          content = element.content_by_name(content_name)
-          content ? content.ingredient.to_s : ''
+          if element.respond_to? content_name
+            content = element.send(content_name)
+          else
+            content = element.content_by_name(content_name)
+            content ? content.ingredient.to_s : ''
+          end
         end.join " "
       end
     end
