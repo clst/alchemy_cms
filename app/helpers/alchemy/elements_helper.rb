@@ -223,7 +223,7 @@ module Alchemy
     # Sort given elements by content.
     #
     # @param [Array] elements - The elements you want to sort
-    # @param [String|Array] content_names - The name(s) of the content(s) you want to sort by
+    # @param [String, Array] content_names - The name(s) of the content(s) you want to sort by
     #
     # @return [Array]
     #
