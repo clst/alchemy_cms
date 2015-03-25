@@ -223,14 +223,19 @@ module Alchemy
     # Sort given elements by content.
     #
     # @param [Array] elements - The elements you want to sort
-    # @param [String] content_name - The name of the content you want to sort by
+    # @param [String|Array] content_names - The name(s) of the content(s) you want to sort by
     #
     # @return [Array]
     #
-    def sort_elements_by_content(elements, content_name)
+    def sort_elements_by_content(elements, content_names)
+      unless content_names.respond_to? :collect
+        content_names = [content_names]
+      end
       elements.sort_by do |element|
-        content = element.content_by_name(content_name)
-        content ? content.ingredient.to_s : ''
+        content_names.collect do |content_name|
+          content = element.content_by_name(content_name)
+          content ? content.ingredient.to_s : ''
+        end.join " "
       end
     end
 
