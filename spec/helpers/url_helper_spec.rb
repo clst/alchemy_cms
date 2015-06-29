@@ -1,11 +1,14 @@
 require 'spec_helper'
 
-include Alchemy::BaseHelper
 include Alchemy::ElementsHelper
 
 module Alchemy
   describe UrlHelper do
     let(:page) { mock_model(Page, urlname: 'testpage', language_code: 'en') }
+
+    before do
+      helper.controller.class_eval { include Alchemy::ConfigurationMethods }
+    end
 
     context 'page path helpers' do
       describe "#show_page_path_params" do
@@ -17,12 +20,12 @@ module Alchemy
 
           it "should return a Hash with urlname and language_id parameter" do
             allow(helper).to receive(:multi_language?).and_return(true)
-            expect(helper.show_page_path_params(page)).to include(urlname: 'testpage', lang: 'en')
+            expect(helper.show_page_path_params(page)).to include(urlname: 'testpage', locale: 'en')
           end
 
           it "should return a Hash with urlname, language_id and query parameter" do
             allow(helper).to receive(:multi_language?).and_return(true)
-            expect(helper.show_page_path_params(page, {query: 'test'})).to include(urlname: 'testpage', lang: 'en', query: 'test')
+            expect(helper.show_page_path_params(page, {query: 'test'})).to include(urlname: 'testpage', locale: 'en', query: 'test')
           end
         end
 
@@ -33,12 +36,12 @@ module Alchemy
 
           it "should return a Hash with the urlname but without language_id parameter" do
             expect(helper.show_page_path_params(page)).to include(urlname: 'testpage')
-            expect(helper.show_page_path_params(page)).not_to include(lang: 'en')
+            expect(helper.show_page_path_params(page)).not_to include(locale: 'en')
           end
 
           it "should return a Hash with urlname and query parameter" do
             expect(helper.show_page_path_params(page, {query: 'test'})).to include(urlname: 'testpage', query: 'test')
-            expect(helper.show_page_path_params(page)).not_to include(lang: 'en')
+            expect(helper.show_page_path_params(page)).not_to include(locale: 'en')
           end
         end
       end

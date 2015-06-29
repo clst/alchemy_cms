@@ -2,15 +2,15 @@
 #
 module Alchemy
   class BaseController < ApplicationController
+    include Alchemy::ConfigurationMethods
     include Alchemy::ControllerActions
     include Alchemy::Modules
+    include Alchemy::SSLProtection
 
     protect_from_forgery
 
     before_action :mailer_set_url_options
     before_action :set_locale
-
-    helper_method :multi_site?
 
     helper 'alchemy/admin/form'
 
@@ -26,24 +26,8 @@ module Alchemy
       ::I18n.locale = Language.current.code
     end
 
-    # Returns the configuration value of given key.
-    #
-    # Config file is in +config/alchemy/config.yml+
-    #
-    def configuration(name)
-      Alchemy::Config.get(name)
-    end
-
-    def multi_language?
-      Language.published.count > 1
-    end
-
-    def multi_site?
-      Site.count > 1
-    end
-
-    def raise_not_found_error
-      raise ActionController::RoutingError.new('Not Found')
+    def not_found_error!(msg = "Not found \"#{request.fullpath}\"")
+      raise ActionController::RoutingError.new(msg)
     end
 
     # Shortcut for Alchemy::I18n.translate method
@@ -59,38 +43,6 @@ module Alchemy
 
     def mailer_set_url_options
       ActionMailer::Base.default_url_options[:host] = request.host_with_port
-    end
-
-    def render_404(exception = nil)
-      if exception
-        logger.info "Rendering 404: #{exception.message}"
-      end
-      render :file => Rails.root.join("public/404.html"), :status => 404, :layout => false
-    end
-
-    # Enforce ssl for login and all admin modules.
-    #
-    # Default is +false+
-    #
-    # === Usage
-    #
-    #   # config/alchemy/config.yml
-    #   ...
-    #   require_ssl: true
-    #   ...
-    #
-    # === Note
-    #
-    # You have to create a ssl certificate
-    # if you want to use the ssl protection.
-    #
-    def ssl_required?
-      !Rails.env.test? && configuration(:require_ssl)
-    end
-
-    # Redirects current request to https.
-    def enforce_ssl
-      redirect_to url_for(request.params.merge(protocol: 'https'))
     end
 
     protected
@@ -150,10 +102,5 @@ WARN
       Rails.logger.error("\n#{e.class} #{e.message} in #{e.backtrace.first}")
       Rails.logger.error(e.backtrace[1..50].each { |l| l.gsub(/#{Rails.root.to_s}/, '') }.join("\n"))
     end
-
-    def raise_authorization_exception(exception)
-      raise("Not permitted to #{exception.action} #{exception.subject}")
-    end
-
   end
 end

@@ -33,14 +33,13 @@ describe Alchemy::Permissions do
       is_expected.not_to be_able_to(:show, restricted_attachment)
     end
 
-    it "can only download not restricted pictures" do
-      is_expected.to be_able_to(:download, picture)
-      is_expected.not_to be_able_to(:download, restricted_picture)
-    end
-
     it "can only see not restricted pictures" do
       is_expected.to be_able_to(:show, picture)
+      is_expected.to be_able_to(:thumbnail, picture)
+      is_expected.to be_able_to(:zoom, picture)
       is_expected.not_to be_able_to(:show, restricted_picture)
+      is_expected.not_to be_able_to(:thumbnail, restricted_picture)
+      is_expected.not_to be_able_to(:zoom, restricted_picture)
     end
 
     it "can only visit not restricted pages" do
@@ -71,7 +70,7 @@ describe Alchemy::Permissions do
   end
 
   context "A member" do
-    let(:user) { member_user }
+    let(:user) { build(:alchemy_dummy_user) }
 
     it "can download all attachments" do
       is_expected.to be_able_to(:download, attachment)
@@ -83,14 +82,13 @@ describe Alchemy::Permissions do
       is_expected.to be_able_to(:show, restricted_attachment)
     end
 
-    it "can download all pictures" do
-      is_expected.to be_able_to(:download, picture)
-      is_expected.to be_able_to(:download, restricted_picture)
-    end
-
     it "can see all pictures" do
       is_expected.to be_able_to(:show, picture)
+      is_expected.to be_able_to(:thumbnail, picture)
+      is_expected.to be_able_to(:zoom, picture)
       is_expected.to be_able_to(:show, restricted_picture)
+      is_expected.to be_able_to(:thumbnail, restricted_picture)
+      is_expected.to be_able_to(:zoom, restricted_picture)
     end
 
     it "can visit restricted pages" do
@@ -125,7 +123,7 @@ describe Alchemy::Permissions do
   end
 
   context "An author" do
-    let(:user) { author_user }
+    let(:user) { build(:alchemy_dummy_user, :as_author) }
 
     it "can leave the admin area" do
       is_expected.to be_able_to(:leave, :alchemy_admin)
@@ -198,7 +196,7 @@ describe Alchemy::Permissions do
   end
 
   context "An editor" do
-    let(:user) { editor_user }
+    let(:user) { build(:alchemy_dummy_user, :as_editor) }
 
     it "can manage pages" do
       is_expected.to be_able_to(:copy, Alchemy::Page)
@@ -237,7 +235,7 @@ describe Alchemy::Permissions do
   end
 
   context "An admin" do
-    let(:user) { admin_user }
+    let(:user) { build(:alchemy_dummy_user, :as_admin) }
 
     it "can check for alchemy updates" do
       is_expected.to be_able_to(:update_check, :alchemy_admin_dashboard)
@@ -249,6 +247,15 @@ describe Alchemy::Permissions do
 
     it "can manage sites" do
       is_expected.to be_able_to(:manage, Alchemy::Site)
+    end
+  end
+
+  context "A logged in user without a role" do
+    let(:user) { mock_model(Alchemy.user_class, alchemy_roles: []) }
+
+    it "can only see visible not restricted pages (like the guest role)" do
+      is_expected.to be_able_to(:see, visible_page)
+      is_expected.not_to be_able_to(:see, not_visible_page)
     end
   end
 end

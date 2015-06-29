@@ -207,8 +207,8 @@ module Alchemy
 
     # Returns true if page is in the active branch
     def page_active?(page)
-      @breadcrumb ||= breadcrumb(@page)
-      @breadcrumb.include?(page)
+      @_page_ancestors ||= Page.ancestors_for(@page)
+      @_page_ancestors.include?(page)
     end
 
     # Returns +'active'+ if the given external page is in the current url path or +nil+.
@@ -229,15 +229,25 @@ module Alchemy
     #
     def render_breadcrumb(options={})
       options = {
-        separator: %(<span class="separator">&gt;</span>),
+        separator: ">",
         page: @page,
         restricted_only: false,
         reverse: false,
         link_active_page: false
       }.merge(options)
-      pages = breadcrumb(options[:page]).accessible_by(current_ability, :see)
-      pages = pages.restricted if options.delete(:restricted_only)
-      pages.to_a.reverse! if options[:reverse]
+
+      pages = Page.
+        ancestors_for(options[:page]).
+        accessible_by(current_ability, :see)
+
+      if options.delete(:restricted_only)
+        pages = pages.restricted
+      end
+
+      if options.delete(:reverse)
+        pages.to_a.reverse!
+      end
+
       if options[:without].present?
         if options[:without].class == Array
           pages = pages.to_a - options[:without]
@@ -245,12 +255,8 @@ module Alchemy
           pages.to_a.delete(options[:without])
         end
       end
-      render(
-        partial: 'alchemy/breadcrumb/page',
-        collection: pages,
-        spacer_template: 'alchemy/breadcrumb/spacer',
-        locals: {pages: pages, options: options}
-      )
+
+      render 'alchemy/breadcrumb/wrapper', pages: pages, options: options
     end
 
     # Returns current page title

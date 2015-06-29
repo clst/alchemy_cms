@@ -8,6 +8,34 @@ module Alchemy
 
     # ClassMethods
 
+    describe '.new_from_scratch' do
+      it "should initialize an element by name from scratch" do
+        el = Element.new_from_scratch(name: 'article')
+        expect(el).to be_valid
+      end
+
+      it "should raise an error if the given name is not defined in the elements.yml" do
+        expect {
+          Element.new_from_scratch(name: 'foobar')
+        }.to raise_error(ElementDefinitionError)
+      end
+
+      it "should take the first part of an given name containing a hash (#)" do
+        el = Element.new_from_scratch(name: 'article#header')
+        expect(el.name).to eq("article")
+      end
+
+      it "should merge given attributes into defined ones" do
+        el = Element.new_from_scratch(name: 'article', page_id: 1)
+        expect(el.page_id).to eq(1)
+      end
+
+      it "should not have forbidden attributes from definition" do
+        el = Element.new_from_scratch(name: 'article')
+        expect(el.contents).to eq([])
+      end
+    end
+
     describe '.copy' do
       let(:element) { FactoryGirl.create(:element, :create_contents_after_create => true, :tag_list => 'red, yellow') }
 
@@ -33,6 +61,10 @@ module Alchemy
     end
 
     describe '.definitions' do
+      it "should allow erb generated elements" do
+        expect(Element.definitions.collect { |el| el['name']} ).to include('erb_element')
+      end
+
       context "without existing yml files" do
         before { allow(File).to receive(:exists?).and_return(false) }
 
@@ -42,7 +74,8 @@ module Alchemy
       end
 
       context "without any definitions in elements.yml" do
-        before { allow(YAML).to receive(:load_file).and_return(false) } # Yes, YAML.load_file returns false if an empty file exists.
+        # Yes, YAML.load returns false if an empty file exists.
+        before { allow(YAML).to receive(:load).and_return(false) }
 
         it "should return an empty array" do
           expect(Element.definitions).to eq([])
@@ -278,32 +311,6 @@ module Alchemy
 
       it "returns an string from element name and id" do
         expect(element.dom_id).to eq("#{element.name}_#{element.id}")
-      end
-    end
-
-    describe '#new_from_scratch' do
-      it "should initialize an element by name from scratch" do
-        el = Element.new_from_scratch({:name => 'article'})
-        expect(el).to be_valid
-      end
-
-      it "should raise an error if the given name is not defined in the elements.yml" do
-        expect { Element.new_from_scratch({:name => 'foobar'}) }.to raise_error
-      end
-
-      it "should take the first part of an given name containing a hash (#)" do
-        el = Element.new_from_scratch({:name => 'article#header'})
-        expect(el.name).to eq("article")
-      end
-
-      it "should merge given attributes into defined ones" do
-        el = Element.new_from_scratch({:name => 'article', :page_id => 1})
-        expect(el.page_id).to eq(1)
-      end
-
-      it "should not have forbidden attributes from definition" do
-        el = Element.new_from_scratch({:name => 'article'})
-        expect(el.contents).to eq([])
       end
     end
 

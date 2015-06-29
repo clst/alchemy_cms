@@ -46,7 +46,16 @@ module Alchemy
     # Returns the current site.
     #
     def current_alchemy_site
-      @current_alchemy_site ||= Site.find_for_host(request.host)
+      @current_alchemy_site ||= begin
+        site_id = params[:site_id] || session[:site_id]
+        if site_id.nil?
+          session.delete :site_id
+          Site.find_for_host(request.host)
+        else
+          session[:site_id] = site_id
+          Site.find(site_id)
+        end
+      end
     end
 
     # Ensures usage of Alchemy's permissions class.
@@ -66,8 +75,8 @@ module Alchemy
         Alchemy.registered_abilities.each do |klass|
           alchemy_permissions.merge(klass.new(current_alchemy_user))
         end
-        if (Object.const_get('Ability') rescue false)
-          alchemy_permissions.merge(Ability.new(current_alchemy_user))
+        if (Object.const_get('::Ability') rescue false)
+          alchemy_permissions.merge(::Ability.new(current_alchemy_user))
         end
         alchemy_permissions
       end
@@ -95,8 +104,8 @@ module Alchemy
     end
 
     def load_alchemy_language_from_params
-      if params[:lang].present?
-        Language.find_by_code(params[:lang])
+      if params[:locale].present?
+        Language.find_by_code(params[:locale])
       end
     end
 
@@ -125,6 +134,5 @@ module Alchemy
         Language.current = language
       end
     end
-
   end
 end

@@ -8,7 +8,9 @@ module Alchemy
 
       has_many :elements, -> { order(:position) }
       has_many :contents, :through => :elements
-      has_and_belongs_to_many :to_be_sweeped_elements, -> { uniq }, class_name: 'Alchemy::Element', join_table: 'alchemy_elements_alchemy_pages'
+      has_and_belongs_to_many :to_be_sweeped_elements, -> { uniq },
+        class_name: 'Alchemy::Element',
+        join_table: ElementToPage.table_name
 
       after_create :autogenerate_elements, :unless => proc { systempage? || do_not_autogenerate }
       after_update :trash_not_allowed_elements, :if => :page_layout_changed?
@@ -85,17 +87,33 @@ module Alchemy
       element_definitions_by_name(element_definition_names)
     end
 
-    # All names of elements that are defined in the page's page_layout definition.
+    # All names of elements that are defined in the corresponding
+    # page and cell definition.
     #
-    # Define elements in +config/alchemy/page_layout.yml+ file
+    # Assign elements to a page in +config/alchemy/page_layouts.yml+ and/or
+    # +config/alchemy/cells.yml+ file.
     #
-    # == Example:
+    # == Example of page_layouts.yml:
     #
     #   - name: contact
+    #     cells: [right_column]
     #     elements: [headline, contactform]
     #
+    # == Example of cells.yml:
+    #
+    #   - name: right_column
+    #     elements: [teaser]
+    #
     def element_definition_names
+      element_names_from_page_definition | element_names_from_cell_definition
+    end
+
+    def element_names_from_page_definition
       definition['elements'] || []
+    end
+
+    def element_names_from_cell_definition
+      cell_definitions.map { |d| d['elements'] }.flatten
     end
 
     # Returns Element definitions with given name(s)
@@ -169,7 +187,7 @@ module Alchemy
     # Returns an array of all EssenceRichtext contents ids
     #
     def richtext_contents_ids
-      contents.essence_richtexts.pluck('alchemy_contents.id')
+      contents.essence_richtexts.pluck("#{Content.table_name}.id")
     end
 
     private

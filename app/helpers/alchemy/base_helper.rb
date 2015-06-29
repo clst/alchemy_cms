@@ -54,33 +54,6 @@ module Alchemy
       end
     end
 
-    # Returns an array of all pages in the same branch from current.
-    # I.e. used to find the active page in navigation.
-    def breadcrumb(current)
-      return [] if current.nil?
-      current.self_and_ancestors.where("parent_id IS NOT NULL")
-    end
-
-    # Returns the Alchemy configuration.
-    #
-    # *DO NOT REMOVE THIS HERE.*
-    #
-    # We need this, if an external engine or app includes this module into actionview.
-    #
-    def configuration(name)
-      Alchemy::Config.get(name)
-    end
-
-    # Returns true if Alchemy is in multi language mode
-    #
-    # *DO NOT REMOVE THIS HERE.*
-    #
-    # We need this, if an external engine or app includes this module into actionview.
-    #
-    def multi_language?
-      Alchemy::Language.published.count > 1
-    end
-
     # Renders the flash partial (+alchemy/admin/partials/flash+)
     #
     # @param [String] notice The notice you want to display
@@ -104,6 +77,5 @@ module Alchemy
         page
       end
     end
-
   end
 end

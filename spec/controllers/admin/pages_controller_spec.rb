@@ -12,7 +12,7 @@ module Alchemy
     end
 
     context 'a member' do
-      before { sign_in(member_user) }
+      before { authorize_user(build(:alchemy_dummy_user)) }
 
       it 'can not access page tree' do
         alchemy_get :index
@@ -21,9 +21,9 @@ module Alchemy
     end
 
     context 'with logged in editor user' do
-      let(:user) { editor_user }
+      let(:user) { build(:alchemy_dummy_user, :as_editor) }
 
-      before { sign_in(user) }
+      before { authorize_user(user) }
 
       describe '#index' do
         let(:language)      { build_stubbed(:language) }
@@ -367,7 +367,7 @@ module Alchemy
 
       describe '#edit' do
         let!(:page)       { create(:page) }
-        let!(:other_user) { create(:author_user) }
+        let!(:other_user) { create(:alchemy_dummy_user, :as_author) }
 
         context 'if page is locked by another user' do
           before { page.lock_to!(other_user) }

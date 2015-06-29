@@ -1,26 +1,25 @@
 # encoding: utf-8
 require 'spec_helper'
 
-include Alchemy::BaseHelper
-
 module Alchemy
   describe PagesHelper do
 
     # Fixtures
-    let(:language)                  { mock_model('Language', :code => 'en') }
-    let(:default_language)          { Language.default }
-    let(:language_root)             { FactoryGirl.create(:language_root_page) }
-    let(:public_page)               { FactoryGirl.create(:public_page) }
-    let(:visible_page)              { FactoryGirl.create(:public_page, :visible => true) }
-    let(:restricted_page)           { FactoryGirl.create(:public_page, :visible => true, :restricted => true) }
-    let(:level_2_page)              { FactoryGirl.create(:public_page, :parent_id => visible_page.id, :visible => true, :name => 'Level 2') }
-    let(:level_3_page)              { FactoryGirl.create(:public_page, :parent_id => level_2_page.id, :visible => true, :name => 'Level 3') }
-    let(:level_4_page)              { FactoryGirl.create(:public_page, :parent_id => level_3_page.id, :visible => true, :name => 'Level 4') }
-    let(:klingonian)                { FactoryGirl.create(:klingonian) }
-    let(:klingonian_language_root)  { FactoryGirl.create(:language_root_page, :language => klingonian) }
-    let(:klingonian_public_page)    { FactoryGirl.create(:public_page, :language => klingonian, :parent_id => klingonian_language_root.id) }
+    let(:language)                 { mock_model('Language', :code => 'en') }
+    let(:default_language)         { Language.default }
+    let(:language_root)            { FactoryGirl.create(:language_root_page) }
+    let(:public_page)              { FactoryGirl.create(:public_page) }
+    let(:visible_page)             { FactoryGirl.create(:public_page, :visible => true) }
+    let(:restricted_page)          { FactoryGirl.create(:public_page, :visible => true, :restricted => true) }
+    let(:level_2_page)             { FactoryGirl.create(:public_page, :parent_id => visible_page.id, :visible => true, :name => 'Level 2') }
+    let(:level_3_page)             { FactoryGirl.create(:public_page, :parent_id => level_2_page.id, :visible => true, :name => 'Level 3') }
+    let(:level_4_page)             { FactoryGirl.create(:public_page, :parent_id => level_3_page.id, :visible => true, :name => 'Level 4') }
+    let(:klingonian)               { FactoryGirl.create(:klingonian) }
+    let(:klingonian_language_root) { FactoryGirl.create(:language_root_page, :language => klingonian) }
+    let(:klingonian_public_page)   { FactoryGirl.create(:public_page, :language => klingonian, :parent_id => klingonian_language_root.id) }
 
     before do
+      helper.controller.class_eval { include Alchemy::ConfigurationMethods }
       allow(Config).to receive(:get) { |arg| arg == :url_nesting ? true : Config.parameter(arg) }
       @root_page = language_root # We need this instance variable in the helpers
     end
@@ -83,7 +82,7 @@ module Alchemy
         end
 
         context "as member user" do
-          let(:user) { member_user }
+          let(:user) { build(:alchemy_dummy_user) }
 
           before { restricted_page }
 
@@ -254,11 +253,13 @@ module Alchemy
       end
 
       context "with options[:restricted_only] set to true" do
-        let(:user) { member_user }
+        let(:user) { build(:alchemy_dummy_user) }
 
         it "should render a breadcrumb of restricted pages only" do
           page.update_attributes!(restricted: true, urlname: 'a-restricted-public-page', name: 'A restricted Public Page', title: 'A restricted Public Page')
-          expect(helper.render_breadcrumb(page: page, restricted_only: true).strip).to match(/^(<span(.[^>]+)>)A restricted Public Page/)
+          result = helper.render_breadcrumb(page: page, restricted_only: true).strip
+          expect(result).to have_selector("*[contains(\"#{page.name}\")]")
+          expect(result).to_not have_selector("*[contains(\"#{parent.name}\")]")
         end
       end
 

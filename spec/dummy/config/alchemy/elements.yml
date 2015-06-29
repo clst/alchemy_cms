@@ -35,6 +35,9 @@
   - name: text
     type: EssenceRichtext
 
+- name: search
+  contents: []
+
 - name: news
   contents:
   - name: date
@@ -102,3 +105,8 @@
     type: EssenceSelect
   - name: essence_text
     type: EssenceText
+
+- name: <%= 'erb_' + 'element' %>
+  contents:
+  - name: text
+    type: EssenceRichtext

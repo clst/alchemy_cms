@@ -22,6 +22,12 @@ module Alchemy
           expect(Content.normalize_essence_type('EssenceText')).to eq("Alchemy::EssenceText")
         end
       end
+
+      context "passing non-namespaced essence type for an existing non-namespaced essence" do
+        it "should not add alchemy namespace" do
+          expect(Content.normalize_essence_type('DummyModel')).to eq("DummyModel")
+        end
+      end
     end
 
     describe '#normalized_essence_type' do
@@ -79,7 +85,7 @@ module Alchemy
         end
 
         it "should raise error" do
-          expect { subject }.to raise_error
+          expect { subject }.to raise_error(EssenceMissingError)
         end
       end
     end
@@ -211,7 +217,7 @@ module Alchemy
 
         it "should raise error" do
           c = Content.create(:element_id => element.id, name: 'headline')
-          expect { c.ingredient = "Welcome" }.to raise_error
+          expect { c.ingredient = "Welcome" }.to raise_error(EssenceMissingError)
         end
       end
     end
