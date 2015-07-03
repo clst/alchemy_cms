@@ -125,11 +125,34 @@ module Alchemy
     #
     def sortable_resource_header_column(attribute)
       if relation = attribute[:relation]
-        "#{relation[:model_association].table_name}.#{relation[:attr_method]}"
+        "#{relation[:model_association].name}_#{relation[:attr_method]}"
       else
         attribute[:name]
       end
     end
 
+    # Renders the row for a resource record in the resources table.
+    #
+    # This helper has a nice fallback. If you create a partial for your record then this partial will be rendered.
+    #
+    # Otherwise the default +app/views/alchemy/admin/resources/_resource.html.erb+ partial gets rendered.
+    #
+    # == Example
+    #
+    # For a resource named +Comment+ you can create a partial named +_comment.html.erb+
+    #
+    #   # app/views/admin/comments/_comment.html.erb
+    #   <tr>
+    #     <td><%= comment.title %></td>
+    #     <td><%= comment.body %></td>
+    #   </tr>
+    #
+    # NOTE: Alchemy gives you a local variable named like your resource
+    #
+    def render_resources
+      render :partial => resource_name, :collection => resources_instance_variable
+    rescue ActionView::MissingTemplate
+      render :partial => 'resource', :collection => resources_instance_variable
+    end
   end
 end
