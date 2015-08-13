@@ -207,8 +207,8 @@ module Alchemy
     def richtext_contents_ids
       descendent_contents
         .where(Element.table_name => {folded: false})
-        .essence_richtexts
-        .pluck("#{Content.table_name}.id")
+        .select(&:has_tinymce?)
+        .collect(&:id)
     end
 
     def element_names_from_definition
@@ -230,8 +230,8 @@ module Alchemy
     # If the page has cells, it looks if there are elements to generate.
     #
     def autogenerate_elements
-      elements_already_on_page = self.elements.available.pluck(:name)
-      elements = self.layout_description["autogenerate"]
+      elements_already_on_page = elements.available.pluck(:name)
+      elements = definition["autogenerate"]
       if elements.present?
         elements.each do |element|
           next if elements_already_on_page.include?(element)
@@ -286,7 +286,7 @@ module Alchemy
       when 'String'
         cell_elements_by_name(cell)
       else
-        self.elements.not_in_cell
+        elements.not_in_cell
       end
     end
 

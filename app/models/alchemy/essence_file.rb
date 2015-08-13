@@ -4,12 +4,13 @@
 #
 #  id            :integer          not null, primary key
 #  attachment_id :integer
-#  title         :string(255)
-#  css_class     :string(255)
+#  title         :string
+#  css_class     :string
 #  creator_id    :integer
 #  updater_id    :integer
 #  created_at    :datetime         not null
 #  updated_at    :datetime         not null
+#  link_text     :string
 #
 
 module Alchemy
@@ -19,7 +20,11 @@ module Alchemy
 
     def attachment_url
       return if attachment.nil?
-      routes.download_attachment_path(id: attachment.id, name: attachment.file_name)
+      routes.download_attachment_path(
+        id: attachment.id,
+        name: attachment.urlname,
+        format: attachment.suffix
+      )
     end
 
     def preview_text(max=30)

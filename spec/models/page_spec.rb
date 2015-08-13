@@ -55,7 +55,7 @@ module Alchemy
         end
 
         context "with url_nesting set to true" do
-          let(:other_parent) { create(:page, parent_id: Page.root.id) }
+          let(:other_parent) { create(:page, parent_id: Page.root.id, visible: true) }
 
           before do
             allow(Config).to receive(:get).and_return(true)
@@ -256,7 +256,10 @@ module Alchemy
         context "with cells" do
           before do
             allow(page).to receive(:definition) do
-              {'cells' => %w(header main)}
+              {
+                'cells' => %w(header main),
+                'autogenerate' => %w(article)
+              }
             end
           end
 
@@ -395,14 +398,14 @@ module Alchemy
       end
     end
 
-    describe '.all_locked' do
+    describe '.locked' do
       it "should return 1 page that is blocked by a user at the moment" do
         create(:public_page, locked: true, name: 'First Public Child', parent_id: language_root.id, language: language)
-        expect(Page.all_locked.size).to eq(1)
+        expect(Page.locked.size).to eq(1)
       end
     end
 
-    describe '.all_locked_by' do
+    describe '.locked_by' do
       let(:user) { double(:user, id: 1, class: DummyUser) }
 
       before do
@@ -414,7 +417,7 @@ module Alchemy
 
       it "should return the correct page collection blocked by a certain user" do
         page = create(:public_page, locked: true, locked_by: 1)
-        expect(Page.all_locked_by(user).pluck(:id)).to eq([page.id])
+        expect(Page.locked_by(user).pluck(:id)).to eq([page.id])
       end
 
       context 'with user class having a different primary key' do
@@ -428,7 +431,7 @@ module Alchemy
 
         it "should return the correct page collection blocked by a certain user" do
           page = create(:public_page, locked: true, locked_by: 123)
-          expect(Page.all_locked_by(user).pluck(:id)).to eq([page.id])
+          expect(Page.locked_by(user).pluck(:id)).to eq([page.id])
         end
       end
     end
@@ -827,12 +830,12 @@ module Alchemy
       before do
         @page = build(:page, page_layout: 'foo')
         allow(@page).to receive(:definition).and_return({'name' => "foo", 'cells' => ["foo_cell"]})
-        @cell_descriptions = [{'name' => "foo_cell", 'elements' => ["1", "2"]}]
-        allow(Cell).to receive(:definitions).and_return(@cell_descriptions)
+        @cell_definitions = [{'name' => "foo_cell", 'elements' => ["1", "2"]}]
+        allow(Cell).to receive(:definitions).and_return(@cell_definitions)
       end
 
       it "should return all cell definitions for its page_layout" do
-        expect(@page.cell_definitions).to eq(@cell_descriptions)
+        expect(@page.cell_definitions).to eq(@cell_definitions)
       end
 
       it "should return empty array if no cells defined in page layout" do
@@ -1241,27 +1244,27 @@ module Alchemy
       end
     end
 
-    describe '#layout_description' do
+    describe '#definition' do
       context 'if the page layout could not be found in the definition file' do
         let(:page) { build_stubbed(:page, page_layout: 'notexisting') }
 
         it "it loggs a warning." do
           expect(Alchemy::Logger).to receive(:warn)
-          page.layout_description
+          page.definition
         end
 
         it "it returns empty hash." do
-          expect(page.layout_description).to eq({})
+          expect(page.definition).to eq({})
         end
       end
 
       context "for a language root page" do
-        it "it returns the page layout description as hash." do
-          expect(language_root.layout_description['name']).to eq('index')
+        it "it returns the page layout definition as hash." do
+          expect(language_root.definition['name']).to eq('index')
         end
 
         it "it returns an empty hash for root page." do
-          expect(rootpage.layout_description).to eq({})
+          expect(rootpage.definition).to eq({})
         end
       end
     end
@@ -1527,6 +1530,18 @@ module Alchemy
 
         it "should not include invisible pages" do
           expect(contact.urlname).not_to match(/invisible/)
+        end
+
+        context "with an invisible parent" do
+          before { parent.update_attribute(:visible, false) }
+
+          it "does not change if set_urlname is called" do
+            expect { page.send(:set_urlname) }.not_to change { page.urlname }
+          end
+
+          it "does not change if update_urlname! is called" do
+            expect { page.update_urlname! }.not_to change { page.urlname }
+          end
         end
 
         context "after changing page's urlname" do
@@ -1941,10 +1956,10 @@ module Alchemy
     describe '#controller_and_action' do
       let(:page) { Page.new }
 
-      context 'if the page has a custom controller defined in its description' do
+      context 'if the page has a custom controller defined in its definition' do
         before do
           allow(page).to receive(:has_controller?).and_return(true)
-          allow(page).to receive(:layout_description).and_return({'controller' => 'comments', 'action' => 'index'})
+          allow(page).to receive(:definition).and_return({'controller' => 'comments', 'action' => 'index'})
         end
         it "should return a Hash with controller and action key-value pairs" do
           expect(page.controller_and_action).to eq({controller: '/comments', action: 'index'})
@@ -1984,5 +1999,66 @@ module Alchemy
       end
     end
 
+    describe "#richtext_contents_ids" do
+      let!(:page) { create(:page) }
+
+      let!(:expanded_element) do
+        create :element,
+          name: 'article',
+          page: page,
+          folded: false,
+          create_contents_after_create: true
+      end
+
+      let!(:folded_element) do
+        create :element,
+          name: 'article',
+          page: page,
+          folded: true,
+          create_contents_after_create: true
+      end
+
+      subject(:richtext_contents_ids) { page.richtext_contents_ids }
+
+      it 'returns content ids for all expanded elements that have tinymce enabled' do
+        expanded_rtf_contents = expanded_element.contents.essence_richtexts
+        expect(richtext_contents_ids).to eq(expanded_rtf_contents.pluck(:id))
+        folded_rtf_content = folded_element.contents.essence_richtexts.first
+        expect(richtext_contents_ids).to_not include(folded_rtf_content.id)
+      end
+
+      context 'with nested elements' do
+        let!(:nested_expanded_element) do
+          create :element,
+            name: 'article',
+            page: page,
+            parent_element: expanded_element,
+            folded: false,
+            create_contents_after_create: true
+        end
+
+        let!(:nested_folded_element) do
+          create :element,
+            name: 'article',
+            page: page,
+            parent_element: folded_element,
+            folded: true,
+            create_contents_after_create: true
+        end
+
+        it 'returns content ids for all expanded nested elements that have tinymce enabled' do
+          expanded_rtf_contents = expanded_element.contents.essence_richtexts
+          nested_expanded_rtf_contents = nested_expanded_element.contents.essence_richtexts
+          rtf_content_ids = expanded_rtf_contents.pluck(:id) +
+                            nested_expanded_rtf_contents.pluck(:id)
+          expect(richtext_contents_ids.sort).to eq(rtf_content_ids)
+
+          folded_rtf_content = folded_element.contents.essence_richtexts.first
+          nested_folded_rtf_content = nested_folded_element.contents.essence_richtexts.first
+
+          expect(richtext_contents_ids).to_not include(nested_folded_rtf_content.id)
+        end
+      end
+    end
   end
 end

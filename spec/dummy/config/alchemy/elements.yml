@@ -17,18 +17,11 @@
   - name: headline
     type: EssenceText
     settings:
-      deletable: true
+      linkable: true
   - name: image
     type: EssencePicture
   - name: text
     type: EssenceRichtext
-    settings:
-      deletable: true
-  available_contents:
-  - name: text
-    type: EssenceRichtext
-  - name: headline
-    type: EssenceText
 
 - name: text
   contents:
@@ -51,11 +44,6 @@
 
 - name: download
   contents:
-  - name: file
-    type: EssenceFile
-    settings:
-      deletable: true
-  available_contents:
   - name: file
     type: EssenceFile
 

@@ -91,43 +91,32 @@ module Alchemy
       return nil if definition.blank?
       definition['contents']
     end
-    alias_method :content_descriptions, :content_definitions
 
     # Returns the definition for given content_name
     def content_definition_for(content_name)
-      if content_descriptions.blank?
+      if content_definitions.blank?
         log_warning "Element #{name} is missing the content definition for #{content_name}"
         return nil
       else
         content_definitions.detect { |d| d['name'] == content_name }
       end
     end
-    alias_method :content_description_for, :content_definition_for
-
-    # Returns the definition for given content_name inside the available_contents
-    def available_content_definition_for(content_name)
-      return nil if available_contents.blank?
-      available_contents.detect { |d| d['name'] == content_name }
-    end
-    alias_method :available_content_description_for, :available_content_definition_for
-
-    # The collection of available essence_types that can be created for
-    # this element depending on its description in +elements.yml+.
-    def available_contents
-      definition['available_contents']
-    end
 
     # Returns an array of all EssenceRichtext contents ids from elements
     #
+    # This is used to re-initialize the TinyMCE editor in the element editor.
+    #
     def richtext_contents_ids
-      richtext_contents.pluck("#{Content.table_name}.id")
+      # This is not very efficient SQL wise I know, but we need to iterate
+      # recursivly through all descendent elements and I don't know how to do this
+      # in pure SQL. Anyone with a better idea is welcome to submit a patch.
+      ids = contents.select(&:has_tinymce?).collect(&:id)
+      expanded_nested_elements = nested_elements.expanded
+      if expanded_nested_elements.present?
+        ids += expanded_nested_elements.collect(&:richtext_contents_ids)
+      end
+      ids.flatten
     end
-
-    # All contents that are type of EssenceRichtext.
-    def rtf_contents
-      contents.essence_richtexts
-    end
-    alias_method :richtext_contents, :rtf_contents
 
     # True, if any of the element's contents has essence validations defined.
     def has_validations?
@@ -142,16 +131,16 @@ module Alchemy
     private
 
     def content_for_rss_meta(type)
-      description = content_descriptions.detect { |c| c["rss_#{type}"] }
-      return if description.blank?
-      contents.find_by(name: description['name'])
+      definition = content_definitions.detect { |c| c["rss_#{type}"] }
+      return if definition.blank?
+      contents.find_by(name: definition['name'])
     end
 
     # creates the contents for this element as described in the elements.yml
     def create_contents
       contents = []
       if definition["contents"].blank?
-        log_warning "Could not find any content descriptions for element: #{name}"
+        log_warning "Could not find any content definitions for element: #{name}"
       else
         definition["contents"].each do |content_hash|
           contents << Content.create_from_scratch(self, content_hash.symbolize_keys)

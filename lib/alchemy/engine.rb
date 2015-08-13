@@ -87,14 +87,14 @@ module Alchemy
       NonStupidDigestAssets.whitelist += [/^tinymce\//]
     end
 
-    # We need to require each essence class in development mode,
+    # We need to reload each essence class in development mode on every request,
     # so it can register itself as essence relation on Page and Element models
+    #
     # @see lib/alchemy/essence.rb:71
-    initializer 'alchemy.load_essence_classes' do |app|
-      unless Rails.application.config.cache_classes
-        Dir.glob(File.join(File.dirname(__FILE__), '../../app/models/alchemy/essence_*.rb')).each do |essence|
-          require essence
-        end
+    config.to_prepare do
+      unless Rails.configuration.cache_classes
+        essences = File.join(File.dirname(__FILE__), '../../app/models/alchemy/essence_*.rb')
+        Dir.glob(essences).each { |essence| load(essence) }
       end
     end
 

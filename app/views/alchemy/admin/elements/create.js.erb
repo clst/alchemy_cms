@@ -15,7 +15,7 @@
 <%- end -%>
 
 <%- if @element.parent_element -%>
-  $element_area = $('[data-element-id="<%= @element.parent_element_id %>"] .nested-elements');
+  $element_area = $('#element_<%= @element.parent_element_id %> > .nestable-elements > .nested-elements');
 <%- else -%>
   $element_area = $('#cell_<%= @cell_name %>');
 <%- end -%>
@@ -35,8 +35,9 @@
   Alchemy.growl('<%= _t(:successfully_added_element) %>');
   Alchemy.closeCurrentDialog();
   Alchemy.Tinymce.init(<%= @element.richtext_contents_ids.to_json %>);
-  Alchemy.PreviewWindow.refresh();
-  Alchemy.ElementEditors.init();
+  Alchemy.PreviewWindow.refresh(function() {
+    Alchemy.ElementEditors.selectElementInPreview(<%= @element.id %>);
+  });
 
   $el = $('#element_<%= @element.id %>');
   $el.trigger('FocusElementEditor.Alchemy');

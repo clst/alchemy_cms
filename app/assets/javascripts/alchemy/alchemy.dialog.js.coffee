@@ -9,6 +9,7 @@ class window.Alchemy.Dialog
     title: ''
     modal: true
     overflow: 'visible'
+    draggable: true
     ready: ->
     closed: ->
 
@@ -34,10 +35,11 @@ class window.Alchemy.Dialog
     window.requestAnimationFrame =>
       @dialog_container.addClass('open')
       @overlay.addClass('open') if @overlay?
-    @dialog.draggable
-      iframeFix: true
-      handle: '.alchemy-dialog-title'
-      containment: 'parent'
+    if @options.draggable
+      @dialog.draggable
+        iframeFix: true
+        handle: '.alchemy-dialog-title'
+        containment: 'parent'
     @$body.addClass('prevent-scrolling')
     Alchemy.currentDialogs.push(this)
     @load()
@@ -50,6 +52,7 @@ class window.Alchemy.Dialog
     @overlay.removeClass('open') if @overlay?
     @$document.on 'webkitTransitionEnd transitionend oTransitionEnd', =>
       @$document.off 'webkitTransitionEnd transitionend oTransitionEnd'
+      Alchemy.Tinymce.removeFrom $('.tinymce', @dialog_body)
       @dialog_container.remove()
       @overlay.remove() if @overlay?
       @$body.removeClass('prevent-scrolling')
@@ -95,6 +98,9 @@ class window.Alchemy.Dialog
   # Initializes the Dialog body
   init: ->
     Alchemy.GUI.init(@dialog_body)
+    Alchemy.Tinymce.initWith
+      selector: ".alchemy-dialog-body textarea.tinymce",
+      width: '65%'
     $('#overlay_tabs', @dialog_body).tabs()
     @watch_remote_forms()
 

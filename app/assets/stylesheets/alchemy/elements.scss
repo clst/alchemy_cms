@@ -21,7 +21,11 @@
 
   textarea {
     width: 100%;
-    height: 140px;
+
+    &.has_tinymce {
+      // We need to do this, because globally all texareas have height: auto !important
+      height: 140px !important;
+    }
   }
 }
 
@@ -364,12 +368,15 @@
   bottom: 2px;
   width: 111px;
 
-  a {
+  > a, > span.icon {
     float: left;
     margin-left: 2px;
     margin-right: 2px;
     width: 18px;
     height: 18px;
+  }
+
+  a {
 
     &.linked {
       position: relative;
@@ -384,11 +391,11 @@
 
       .icon { margin-left: 1px }
     }
+  }
 
-    &.disabled {
-      @include opacity(0.3);
-      cursor: default;
-    }
+  a.disabled, > span.icon {
+    @include opacity(0.3);
+    cursor: default;
   }
 }
 
@@ -539,13 +546,6 @@ div.file_icon {
   }
 }
 
-a.new_content_link {
-  display: block;
-  text-align: center;
-  margin-bottom: 12px;
-  margin-top: 4px;
-}
-
 div.tinymce_container {
   position: relative;
   margin: $default-margin 0;
@@ -575,13 +575,17 @@ select.long {
     width: 100%;
   }
 
-  &.missing p {
-    line-height: 25px;
-    padding: 2*$default-padding;
-    border: 1px solid #f5b04e;
-    background-color: #f5dea9;
-    @extend %rounded-border;
-    font-size: 11px;
+  &.missing {
+
+    .message {
+      margin: 0;
+      @include clearfix;
+    }
+
+    p {
+      float: left;
+      width: 70%;
+    }
 
     .icon.warning {
       vertical-align: text-bottom;
@@ -592,6 +596,7 @@ select.long {
     .button {
       float: right;
       margin: 0;
+      text-decoration: none;
     }
   }
 
@@ -722,7 +727,7 @@ div.pictures_for_element {
   margin-top: 4px;
 }
 
-textarea.default_tinymce, textarea.custom_tinymce {
+textarea.has_tinymce {
   visibility: hidden;
 }
 

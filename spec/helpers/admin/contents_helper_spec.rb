@@ -8,7 +8,7 @@ describe Alchemy::Admin::ContentsHelper do
     let(:content) do
       mock_model 'Content',
         name: 'intro',
-        description: {name: 'intro', type: 'EssenceText'},
+        definition: {name: 'intro', type: 'EssenceText'},
         name_for_label: 'Intro',
         has_validations?: false
     end
@@ -26,8 +26,8 @@ describe Alchemy::Admin::ContentsHelper do
       end
     end
 
-    context 'with missing description' do
-      before { expect(content).to receive(:description).and_return({}) }
+    context 'with missing definition' do
+      before { expect(content).to receive(:definition).and_return({}) }
 
       it "renders a warning" do
         is_expected.to have_selector('span.warning')
@@ -43,23 +43,4 @@ describe Alchemy::Admin::ContentsHelper do
       end
     end
   end
-
-  describe 'render_new_content_link' do
-    subject { helper.render_new_content_link(element) }
-
-    it "renders a link to add new content to element" do
-      allow(helper).to receive(:render_icon).and_return('')
-      is_expected.to match(/a.+href.*admin\/elements\/#{element.id}\/contents\/new/m)
-    end
-  end
-
-  describe 'render_create_content_link' do
-    subject { helper.render_create_content_link(element, 'headline') }
-
-    it "should render a link to create a content in element" do
-      allow(helper).to receive(:render_icon).and_return('')
-      is_expected.to have_selector('a.new_content_link[data-method="post"]')
-    end
-  end
-
 end

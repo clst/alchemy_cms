@@ -159,7 +159,7 @@ de:
     anchor: 'Sprungmarke'
     back: 'zurück'
     create_tree_as_new_language: "%{language} als neuen Sprachbaum anlegen"
-    "Active Pages": "Aktive Seiten"
+    locked_pages: "Aktive Seiten"
     "Add global page": "Neue globale Seite"
     "Add page link": "Verweis hinzufügen"
     "Adobe Website": "Adobe Webseite"
@@ -198,7 +198,8 @@ de:
     "Flush picture cache": "Bildercache löschen"
     "Global shortcuts": "Globale Tastaturbefehle"
     "Hide childpages": "Unterseiten ausblenden"
-    "Hide Elements": "Elemente ausblenden"
+    hide_elements: "Elemente ausblenden"
+    hide_element: "Element ausblenden"
     "If you have any problems using the Flash uploader you can switch to": "Sollten Sie Probleme mit dem Flash® Uploader haben, wechseln Sie einfach zur %{link}"
     "Image missing": "Bild fehlt"
     "Image size": "Bildgröße"
@@ -259,7 +260,8 @@ de:
     "Select an content": "Wählen Sie einen Inhalt aus"
     "Select style": "Stilvorlage"
     "Send reset instructions": "Anweisungen senden"
-    "Show Elements": "Elemente anzeigen"
+    show_elements: "Elemente anzeigen"
+    show_element: "Element anzeigen"
     "Show childpages": "Unterseiten anzeigen"
     "Show clipboard": "Zwischenablage anzeigen"
     "Show picture infos": "Bild Informationen anzeigen"
@@ -285,9 +287,9 @@ de:
     "View File": "Datei anzeigen"
     "Visit page": "zur Seite gehen"
     "Warning!": "Achtung!"
-    content_description_missing: "Warnung: Für diesen Content konnte die Vorlage nicht gefunden werden. Bitte überprüfen Sie die elements.yml Datei."
-    element_description_missing: "Warnung! Für dieses Element konnte die Vorlage nicht gefunden werden. Bitte überprüfen Sie die elements.yml Datei."
-    page_layout_description_missing: "Warnung! Für diese Seite konnte die Vorlage nicht gefunden werden. Bitte überprüfen Sie die page_layouts.yml Datei."
+    content_definition_missing: "Warnung: Für diesen Content konnte die Vorlage nicht gefunden werden. Bitte überprüfen Sie die elements.yml Datei."
+    element_definition_missing: "Warnung! Für dieses Element konnte die Vorlage nicht gefunden werden. Bitte überprüfen Sie die elements.yml Datei."
+    page_definition_missing: "Warnung! Für diese Seite konnte die Vorlage nicht gefunden werden. Bitte überprüfen Sie die page_layouts.yml Datei."
     "Welcome to Alchemy": "Willkommen in Alchemy"
     "Who else is online": "Wer ist noch online"
     "Yes": "Ja"
@@ -502,6 +504,8 @@ de:
         last_upload: "die zuletzt hochgeladen wurden"
         recent: "aus den letzten 24 Stunden"
         without_tag: "ohne Tag"
+    picture_not_in_use_yet: Dieses Bild ist bisher nicht in Verwendung
+    pictures_in_page: "%{page} in %{pictures}"
     place_link: "Text verlinken"
     player_version: "Flashplayer Version"
     "please enter subject and mail address": "Bitte geben Sie den Betreff und eine Empfängeradresse an."
@@ -844,6 +848,8 @@ de:
 
       alchemy/essence_file:
         css_class: Stil
+        link_text: Link-Text
+        title: Titel
 
       alchemy/essence_picture:
         caption: "Untertitel"
