@@ -47,5 +47,6 @@
   $('#clipboard_button .icon.clipboard').removeClass('full');
 <%- end -%>
 
-  <%= update_essence_select_elements(@page, @element) -%>
+  <%#JOE: this causes multiple MB of js:
+    #= update_essence_select_elements(@page, @element) -%>
 })();
