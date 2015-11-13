@@ -3,7 +3,7 @@ source 'https://rubygems.org'
 gemspec
 
 gem 'sqlite3' if ENV['DB'].nil? || ENV['DB'] == 'sqlite'
-gem 'mysql2'  if ENV['DB'] == 'mysql'
+gem 'mysql2', '~> 0.3.18' if ENV['DB'] == 'mysql'
 gem 'pg'      if ENV['DB'] == 'postgresql'
 
 group :development, :test do
@@ -25,6 +25,13 @@ group :development, :test do
     gem 'spring-commands-rspec'
     gem 'rubocop', require: false
   end
+  gem 'capybara', '~> 2.4'
+  gem 'database_cleaner', '~> 1.3'
+  gem 'factory_girl_rails', '~> 4.5'
+  gem 'poltergeist', '~> 1.5'
+  gem 'rspec-activemodel-mocks', '~> 1.0'
+  gem 'rspec-rails', '~> 3.0'
+
 end
 
 # We need this if we want to start the dummy app in production, ie on Teatro.io

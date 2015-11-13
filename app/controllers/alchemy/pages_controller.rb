@@ -1,8 +1,10 @@
 module Alchemy
   class PagesController < Alchemy::BaseController
-
     before_action :enforce_primary_host_for_site
     before_action :render_page_or_redirect, only: [:show]
+
+    # Needs to be included after +before_action+ calls, to be sure the filters are appended.
+    include OnPageLayout::CallbacksRunner
 
     # Showing page from params[:urlname]
     #

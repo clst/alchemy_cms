@@ -60,13 +60,13 @@ module Alchemy
       def essence_picture_thumbnail(content, options)
         return if content.ingredient.blank?
         crop = !(content.essence.crop_size.blank? && content.essence.crop_from.blank?) ||
-          (content_settings_value(content, :crop, options) == true || content_settings_value(content, :crop, options) == "true")
+          (content.settings_value(:crop, options) == true || content.settings_value(:crop, options) == "true")
         image_options = {
-          size: content.essence.thumbnail_size(content.essence.render_size.blank? ? content_settings_value(content, :size, options) : content.essence.render_size, crop),
+          size: content.essence.thumbnail_size(content.essence.render_size.blank? ? content.settings_value(:size, options) : content.essence.render_size, crop),
           crop_from: content.essence.crop_from.blank? ? nil : content.essence.crop_from,
           crop_size: content.essence.crop_size.blank? ? nil : content.essence.crop_size,
           crop: crop ? 'crop' : nil,
-          upsample: content_settings_value(content, :upsample, options)
+          upsample: content.settings_value(:upsample, options)
         }
         image_tag(
           alchemy.thumbnail_path({
@@ -78,6 +78,15 @@ module Alchemy
           class: 'img_paddingtop',
           title: _t(:image_name) + ": #{content.ingredient.name}"
         )
+      end
+
+      # Size value for edit picture dialog
+      def edit_picture_dialog_size(content, options = {})
+        if content.settings_value(:caption_as_textarea, options)
+          content.settings_value(:sizes, options) ? '380x320' : '380x300'
+        else
+          content.settings_value(:sizes, options) ? '380x290' : '380x255'
+        end
       end
 
       private
@@ -114,7 +123,6 @@ module Alchemy
           page.name
         end
       end
-
     end
   end
 end

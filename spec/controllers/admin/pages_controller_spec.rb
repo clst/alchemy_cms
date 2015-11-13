@@ -26,8 +26,8 @@ module Alchemy
       before { authorize_user(user) }
 
       describe '#index' do
-        let(:language)      { build_stubbed(:language) }
-        let(:language_root) { build_stubbed(:language_root_page) }
+        let(:language)      { build_stubbed(:alchemy_language) }
+        let(:language_root) { build_stubbed(:alchemy_page, :language_root) }
 
         context 'with existing language root page' do
           before do
@@ -56,18 +56,36 @@ module Alchemy
       end
 
       describe "#flush" do
-        let(:language) { mock_model('Language', code: 'en', pages: double(flushables: [page_1, page_2])) }
-        let(:page_1)   { build_stubbed(:page) }
-        let(:page_2)   { build_stubbed(:page) }
+        let(:content_page_1) { create(:alchemy_page, :public, name: "content page 1", published_at: Time.current - 5.days) }
+        let(:content_page_2) { create(:alchemy_page, :public, name: "content page 2", published_at: Time.current - 8.days) }
+        let(:layout_page_1)  { create(:alchemy_page, layoutpage: true, name: "layout_page 1", published_at: Time.current - 5.days) }
+        let(:layout_page_2)  { create(:alchemy_page, layoutpage: true, name: "layout_page 2", published_at: Time.current - 8.days) }
+        let(:content_pages)  { [content_page_1, content_page_2] }
+        let(:layout_pages)   { [layout_page_1, layout_page_2] }
 
         before do
-          expect(Language).to receive(:current).at_least(:once).and_return(language)
+          content_pages
+          layout_pages
         end
 
-        it "should remove the cache of all pages" do
-          expect(page_1).to receive(:publish!)
-          expect(page_2).to receive(:publish!)
-          alchemy_xhr :post, :flush
+        it "should update the published_at field of content pages" do
+          travel_to(Time.current) do
+            alchemy_xhr :post, :flush
+            content_pages.map(&:reload) # Reloading because published_at was directly updated in the database.
+            content_pages.each do |page|
+              expect(page.published_at).to eq(Time.current)
+            end
+          end
+        end
+
+        it "should update the published_at field of layout pages" do
+          travel_to(Time.current) do
+            alchemy_xhr :post, :flush
+            layout_pages.map(&:reload) # Reloading because published_at was directly updated in the database.
+            layout_pages.each do |page|
+              expect(page.published_at).to eq(Time.current)
+            end
+          end
         end
       end
 
@@ -86,7 +104,7 @@ module Alchemy
       end
 
       describe '#show' do
-        let(:page) { build_stubbed(:page, language_code: 'nl') }
+        let(:page) { build_stubbed(:alchemy_page, language_code: 'nl') }
 
         before do
           expect(Page).to receive(:find).with("#{page.id}").and_return(page)
@@ -116,9 +134,9 @@ module Alchemy
       end
 
       describe '#order' do
-        let(:page_1)       { FactoryGirl.create(:page, visible: true) }
-        let(:page_2)       { FactoryGirl.create(:page, visible: true) }
-        let(:page_3)       { FactoryGirl.create(:page, visible: true) }
+        let(:page_1)       { create(:alchemy_page, visible: true) }
+        let(:page_2)       { create(:alchemy_page, visible: true) }
+        let(:page_3)       { create(:alchemy_page, visible: true) }
         let(:page_item_1)  { {id: page_1.id, slug: page_1.slug, restricted: false, external: page_1.redirects_to_external?, visible: page_1.visible?, children: [page_item_2]} }
         let(:page_item_2)  { {id: page_2.id, slug: page_2.slug, restricted: false, external: page_2.redirects_to_external?, visible: page_2.visible?, children: [page_item_3]} }
         let(:page_item_3)  { {id: page_3.id, slug: page_3.slug, restricted: false, external: page_3.redirects_to_external?, visible: page_3.visible? } }
@@ -180,7 +198,7 @@ module Alchemy
           end
 
           context 'with restricted page in tree' do
-            let(:page_2) { FactoryGirl.create(:page, restricted: true) }
+            let(:page_2) { create(:alchemy_page, restricted: true) }
             let(:page_item_2) do
               {
                 id: page_2.id,
@@ -232,7 +250,7 @@ module Alchemy
         render_views
 
         context "with page having nested urlname" do
-          let(:page) { create(:page, name: 'Foobar', urlname: 'foobar') }
+          let(:page) { create(:alchemy_page, name: 'Foobar', urlname: 'foobar') }
 
           it "should always show the slug" do
             alchemy_xhr :get, :configure, {id: page.id}
@@ -326,8 +344,8 @@ module Alchemy
 
       describe '#copy_language_tree' do
         let(:params)                     { {languages: {new_lang_id: '2', old_lang_id: '1'}} }
-        let(:language_root_to_copy_from) { build_stubbed(:language_root_page) }
-        let(:copy_of_language_root)      { build_stubbed(:language_root_page) }
+        let(:language_root_to_copy_from) { build_stubbed(:alchemy_page, :language_root) }
+        let(:copy_of_language_root)      { build_stubbed(:alchemy_page, :language_root) }
         let(:root_page)                  { mock_model('Page') }
 
         before do
@@ -366,7 +384,7 @@ module Alchemy
       end
 
       describe '#edit' do
-        let!(:page)       { create(:page) }
+        let!(:page)       { create(:alchemy_page) }
         let!(:other_user) { create(:alchemy_dummy_user, :as_author) }
 
         context 'if page is locked by another user' do
@@ -426,7 +444,7 @@ module Alchemy
 
       describe '#destroy' do
         let(:clipboard) { session[:alchemy_clipboard] = {} }
-        let(:page) { FactoryGirl.create(:public_page) }
+        let(:page) { create(:alchemy_page, :public) }
 
         before { clipboard['pages'] = [{'id' => page.id.to_s}] }
 
@@ -523,7 +541,7 @@ module Alchemy
       end
 
       describe "#switch_language" do
-        let(:language) { build_stubbed(:klingonian)}
+        let(:language) { build_stubbed(:alchemy_language, :klingonian)}
 
         before do
           allow(Language).to receive(:find_by).and_return(language)

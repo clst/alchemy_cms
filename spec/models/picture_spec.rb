@@ -5,7 +5,7 @@ module Alchemy
   describe Picture do
 
     it_behaves_like "has image transformations" do
-      let(:picture) { FactoryGirl.build_stubbed(:picture) }
+      let(:picture) { build_stubbed(:alchemy_picture) }
     end
 
     let :image_file do
@@ -126,8 +126,68 @@ module Alchemy
       end
     end
 
+    describe ".search_by" do
+      subject(:search_by) { Picture.search_by(params, query, per_page) }
+
+      let(:pictures) { Picture.all }
+      let(:params) { ActionController::Parameters.new }
+      let(:query) { double(result: pictures) }
+      let(:per_page) { nil }
+
+      it 'orders the result by name' do
+        expect(pictures).to receive(:order).with(:name)
+        search_by
+      end
+
+      context "with per_page given" do
+        let(:per_page) { 10 }
+
+        context "without page parameter given" do
+          it "paginates the records" do
+            expect(pictures).to receive(:page).with(1).and_call_original
+            search_by
+          end
+        end
+
+        context "with page parameter given" do
+          let(:params) do
+            ActionController::Parameters.new(page: 2)
+          end
+
+          it "paginates the records" do
+            expect(pictures).to receive(:page).with(2).and_call_original
+            search_by
+          end
+        end
+      end
+
+      context "when params[:filter] is set" do
+        let(:params) do
+          ActionController::Parameters.new(filter: 'recent')
+        end
+
+        it "filters the pictures collection by the given filter string" do
+          expect(pictures).to \
+            receive(:filtered_by).with(params['filter']).and_call_original
+          search_by
+        end
+      end
+
+      context "when params[:tagged_with] is set" do
+        let(:params) do
+          ActionController::Parameters.new(tagged_with: 'kitten')
+        end
+
+        it "filters the records by tags" do
+          expect(pictures).to \
+            receive(:tagged_with).with(params['tagged_with']).and_call_original
+          search_by
+        end
+      end
+    end
+
     describe '.filtered_by' do
-      let(:picture) { FactoryGirl.build_stubbed(:picture) }
+      let(:picture) { build_stubbed(:alchemy_picture) }
 
       context "with 'recent' as argument" do
         it 'should call the .recent scope' do
@@ -193,7 +253,7 @@ module Alchemy
     describe '#destroy' do
       context "a picture that is assigned in an essence" do
         let(:essence_picture) { EssencePicture.create }
-        let(:picture) { FactoryGirl.create :picture }
+        let(:picture) { create :alchemy_picture }
 
         before do
           essence_picture.update_attributes(picture_id: picture.id)
@@ -240,14 +300,14 @@ module Alchemy
     describe '#urlname' do
       subject { picture.urlname }
 
-      let(:picture) { build_stubbed(:picture, name: 'Cute kittens.jpg') }
+      let(:picture) { build_stubbed(:alchemy_picture, name: 'Cute kittens.jpg') }
 
       it "returns a uri escaped name" do
         is_expected.to eq('Cute+kittens')
       end
 
       context 'with blank name' do
-        let(:picture) { build_stubbed(:picture, name: '') }
+        let(:picture) { build_stubbed(:alchemy_picture, name: '') }
 
         it "returns generic name" do
           is_expected.to eq("image_#{picture.id}")
@@ -258,7 +318,7 @@ module Alchemy
     describe '#to_jq_upload' do
       subject { picture.to_jq_upload }
 
-      let(:picture) { build_stubbed(:picture, image_file_name: 'cute-kittens.jpg', image_file_size: 1024) }
+      let(:picture) { build_stubbed(:alchemy_picture, image_file_name: 'cute-kittens.jpg', image_file_size: 1024) }
 
       it "returns a hash containing data for jquery fileuploader" do
         is_expected.to be_an_instance_of(Hash)
@@ -267,7 +327,7 @@ module Alchemy
       end
 
       context 'with error' do
-        let(:picture) { build_stubbed(:picture) }
+        let(:picture) { build_stubbed(:alchemy_picture) }
 
         before do
           expect(picture).to receive(:errors).and_return({image_file: %w(stupid_cats)})
@@ -283,7 +343,7 @@ module Alchemy
     describe '#restricted?' do
       subject { picture.restricted? }
 
-      let(:picture) { build_stubbed(:picture) }
+      let(:picture) { build_stubbed(:alchemy_picture) }
 
       context 'is assigned on pages' do
         context 'that are all restricted' do
@@ -315,6 +375,27 @@ module Alchemy
         end
 
         it { is_expected.to be_falsey }
+      end
+    end
+
+    context 'navigating records' do
+      let!(:picture1) { create(:alchemy_picture, name: 'abc') }
+      let!(:picture2) { create(:alchemy_picture, name: 'def') }
+
+      describe "#previous" do
+        subject { picture2.previous }
+
+        it "returns the previous record by name" do
+          is_expected.to eq(picture1)
+        end
+      end
+
+      describe "#next" do
+        subject { picture1.next }
+
+        it "returns the next record by name" do
+          is_expected.to eq(picture2)
+        end
       end
     end
   end

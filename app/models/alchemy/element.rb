@@ -63,7 +63,8 @@ module Alchemy
     has_many :nested_elements,
       -> { order(:position).not_trashed },
       class_name: 'Alchemy::Element',
-      foreign_key: :parent_element_id
+      foreign_key: :parent_element_id,
+      dependent: :destroy
 
     belongs_to :cell
     belongs_to :page
@@ -285,7 +286,7 @@ module Alchemy
     # If the page is the current preview it uses the element's updated_at value as cache key.
     #
     def cache_key
-      if Page.current_preview == self.page
+      if Page.current_preview == page
         "alchemy/elements/#{id}-#{updated_at}"
       else
         "alchemy/elements/#{id}-#{page.published_at}"
@@ -300,7 +301,11 @@ module Alchemy
     # Copy all nested elements from current element to given target element.
     def copy_nested_elements_to(target_element)
       nested_elements.map do |nested_element|
-        Element.copy(nested_element, parent_element_id: target_element.id)
+        Element.copy(nested_element, {
+          parent_element_id: target_element.id,
+          page_id: target_element.page_id,
+          cell_id: target_element.cell_id
+        })
       end
     end
 

@@ -14,6 +14,9 @@ module Alchemy
 
       authorize_resource class: Alchemy::Page, except: :index
 
+      # Needs to be included after +before_action+ calls, to be sure the filters are appended.
+      include OnPageLayout::CallbacksRunner
+
       def index
         authorize! :index, :alchemy_admin_pages
 
@@ -196,12 +199,13 @@ module Alchemy
       end
 
       def flush
-        Language.current.pages.flushables.each do |page|
-          page.publish!
-        end
-        respond_to do |format|
-          format.js
-        end
+        Language.current.pages.flushables.update_all(published_at: Time.current)
+        # We need to ensure, that also all layoutpages get the +published_at+ timestamp set,
+        # but not set to public true, because the cache_key for an element is +published_at+
+        # and we don't want the layout pages to be present in +Page.published+ scope.
+        # Not the greatest solution, but ¯\_(ツ)_/¯
+        Language.current.pages.flushable_layoutpages.update_all(published_at: Time.current)
+        respond_to { |format| format.js }
       end
 
       private

@@ -2,27 +2,30 @@ require 'spec_helper'
 
 module Alchemy
   describe Site do
-    let(:site) { FactoryGirl.create(:site) }
-    let(:another_site) { FactoryGirl.create(:site, name: 'Another Site', host: 'another.com') }
+    let(:site) { create(:alchemy_site) }
+    let(:another_site) { create(:alchemy_site, name: 'Another Site', host: 'another.com') }
 
     describe 'new instances' do
-      subject { FactoryGirl.build(:site) }
+      subject { build(:alchemy_site, host: 'bla.com') }
+
+      before { Site.current = subject }
 
       it 'should start out with no languages' do
         expect(subject.languages).to be_empty
       end
 
       context 'when being saved' do
+
         context 'when it has no languages yet' do
           it 'should automatically create a default language' do
             subject.save!
-            expect(subject.languages.length).to eq(1) # using count returns 0, although the resulting array has a length of 1 / O.o
+            expect(subject.languages.count).to eq(1)
             expect(subject.languages.first).to be_default
           end
         end
 
         context 'when it already has a language' do
-          let(:language) { FactoryGirl.build(:language, site: nil) }
+          let(:language) { build(:alchemy_language, site: nil) }
           before { subject.languages << language }
 
           it 'should not create any additional languages' do
@@ -40,7 +43,7 @@ module Alchemy
       # But let's add some more:
       #
       let(:default_site)    { Site.default }
-      let!(:magiclabs_site) { FactoryGirl.create(:site, host: 'www.magiclabs.de', aliases: 'magiclabs.de magiclabs.com www.magiclabs.com') }
+      let!(:magiclabs_site) { create(:alchemy_site, host: 'www.magiclabs.de', aliases: 'magiclabs.de magiclabs.com www.magiclabs.com') }
 
       subject { Site.find_for_host(host) }
 

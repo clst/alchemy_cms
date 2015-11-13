@@ -201,6 +201,19 @@ describe "The Routing" do
     end
   end
 
+  describe "rss feed requests" do
+    it "should be handled by alchemy/pages controller" do
+      expect({
+        get: "/news.rss"
+      }).to route_to(
+        controller: "alchemy/pages",
+        action: "show",
+        urlname: "news",
+        format: "rss"
+      )
+    end
+  end
+
   describe "unknown formats" do
     it "should be handled by alchemy/pages controller" do
       expect({
@@ -229,6 +242,64 @@ describe "The Routing" do
       expect({
         get: "/rails/info/routes"
       }).not_to be_routable
+    end
+  end
+
+  context "for admin interface" do
+    context "default" do
+      it "should route to admin dashboard" do
+        expect({
+          get: "/admin/dashboard"
+        }).to route_to(
+          controller: "alchemy/admin/dashboard",
+          action: "index"
+        )
+      end
+
+      it "should route to page preview" do
+        expect({
+          get: "/admin/pages/3/preview"
+        }).to route_to(
+          controller: "alchemy/admin/pages",
+          action: "preview",
+          id: "3"
+        )
+      end
+    end
+
+    context "customized" do
+      before(:all) do
+        Alchemy.admin_path = "/backend"
+        Alchemy.admin_constraints = {subdomain: "hidden"}
+        Rails.application.reload_routes!
+      end
+
+      it "should route to admin dashboard" do
+        expect({
+          get: "http://hidden.example.org/backend/dashboard"
+        }).to route_to(
+          controller: "alchemy/admin/dashboard",
+          action: "index",
+          subdomain: "hidden"
+        )
+      end
+
+      it "should route to page preview" do
+        expect({
+          get: "http://hidden.example.org/backend/pages/3/preview"
+        }).to route_to(
+          controller: "alchemy/admin/pages",
+          action: "preview",
+          id: "3",
+          subdomain: "hidden"
+        )
+      end
+
+      after(:all) do
+        Alchemy.admin_path = "/admin"
+        Alchemy.admin_constraints = {}
+        Rails.application.reload_routes!
+      end
     end
   end
 end

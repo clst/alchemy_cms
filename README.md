@@ -6,6 +6,8 @@
 
 ## About
 
+[![Join the chat at https://gitter.im/AlchemyCMS/alchemy_cms](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/AlchemyCMS/alchemy_cms?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
+
 ![Alchemy CMS](http://alchemy-cms.com/assets/alchemy_logo.svg)
 
 Alchemy is a powerful, flexible and user centric Rails CMS.
@@ -173,6 +175,19 @@ Alchemy has very flexible ways to organize and manage content. Please be sure to
 
 Beginning with Alchemy 3.1 we do not patch the `ApplicationController` anymore. If you have controllers that loads Alchemy content or uses Alchemy helpers in the views (i.e. `render_navigation` or `render_elements`) you can either inherit from `Alchemy::BaseController` or you `include Alchemy::ControllerActions` in your controller (**that's the recommended way**).
 
+### Custom admin interface routing
+
+By default, Alchemy Dashboard is accessible at <http://example.com/admin>. You can change this by setting `Alchemy.admin_path` and `Alchemy.admin_constraints`.
+For example, these settings:
+
+```ruby
+# config/initializers/alchemy.rb
+
+Alchemy.admin_path = '/backend'
+Alchemy.admin_constraints = {subdomain: 'hidden'}
+```
+
+will move the dashboard to <http://hidden.example.com/backend>.
 
 ## Upgrading
 

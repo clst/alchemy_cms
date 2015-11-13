@@ -24,9 +24,9 @@ require 'alchemy/test_support/essence_shared_examples'
 require 'alchemy/test_support/integration_helpers'
 require 'alchemy/test_support/factories'
 
+require_relative 'factories'
 require_relative "support/hint_examples.rb"
 require_relative "support/transformation_examples.rb"
-require_relative "support/rspec-activemodel-mocks_patch.rb"
 
 ActionMailer::Base.delivery_method = :test
 ActionMailer::Base.perform_deliveries = true
@@ -50,6 +50,7 @@ RSpec.configure do |config|
   config.raise_errors_for_deprecations!
   config.run_all_when_everything_filtered = true
   config.filter_run :focus
+  config.include ActiveSupport::Testing::TimeHelpers
   config.include Alchemy::Engine.routes.url_helpers
   config.include Alchemy::TestSupport::ControllerRequests, type: :controller
   [:controller, :feature].each do |type|

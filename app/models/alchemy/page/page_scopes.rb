@@ -50,7 +50,7 @@ module Alchemy
       #
       scope :public_language_roots, -> {
         published.language_roots.where(
-          language_code: Language.published.pluck(:code)
+          language_code: Language.published.pluck(:language_code)
         )
       }
 
@@ -77,6 +77,14 @@ module Alchemy
       # Used for flushing all pages caches at once.
       #
       scope :flushables, -> { not_locked.published.contentpages }
+
+      # Returns all layoutpages that are not locked.
+      #
+      # Used for flushing all pages caches at once.
+      #
+      scope :flushable_layoutpages, -> {
+        not_locked.layoutpages.where.not(parent_id: Page.unscoped.root.id)
+      }
 
       # All searchable pages
       #
